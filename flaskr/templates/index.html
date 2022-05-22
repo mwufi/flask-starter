@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Welcome, adventurer!{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+{% if g.user %}
+<p>Hi there! You are user # {{ g.user.id }}</p>
+{% else %}
+<p>You must be new! Please register or log in to enter</p>
+{% endif %}
+{% endblock %}
