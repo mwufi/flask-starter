@@ -35,7 +35,9 @@ def register():
                 u = User(username=username, password=generate_password_hash(password))
                 db.session.add(u)
                 db.session.commit()
-            except IntegrityError:
+            except IntegrityError as e:
+                db.session.rollback()
+                print(e)
                 error = f"User {username} already registered."
             else:
                 return redirect(url_for("auth.login"))
