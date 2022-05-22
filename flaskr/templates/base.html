@@ -2,14 +2,16 @@
 <title>{% block title %}{% endblock %} - Flaskr</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
 <nav>
-  <h1>Flaskr</h1>
+  <h1><a href="{{ url_for('blog.index') }}">Flaskr</a></h1>
   <ul>
     {% if g.user %}
-    <li><span>{{ g.user['username'] }}</span></li>
+    <li>
+      <a href="{{ url_for('tokens.index') }}">{{ g.user.username }}</a>
+    </li>
     <li>
       <a href="{{ url_for('auth.logout') }}">Log Out</a>
-      {% else %}
     </li>
+    {% else %}
 
     <li><a href="{{ url_for('auth.register') }}">Register</a></li>
     <li>
