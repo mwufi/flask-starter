@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Your tokens{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+{% for token in tokens %}
+  <article class="post">
+    <header>
+     <div>
+      <h1> Token # {{ token.id }}</h1>
+      <div class="about"> Created at {{ token.created.strftime('%Y-%m-%d %H:%m') }} </div>
+     </div>
+    </header>
+    <p class="token">{{ token.value }}</p>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  </article>
+{% endfor %}
+{% endblock %}
