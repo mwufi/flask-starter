@@ -9,8 +9,9 @@ from flask import (
     session,
     url_for,
 )
+from sqlalchemy.exc import IntegrityError
 from werkzeug.security import check_password_hash, generate_password_hash
-from flaskr.db import get_db
+from flaskr.db import get_db, User
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -30,12 +31,10 @@ def register():
 
         if error is None:
             try:
-                db.execute(
-                    "Insert into user (username, password) values (?, ?)",
-                    (username, generate_password_hash(password)),
-                )
-                db.commit()
-            except db.IntegrityError:
+                u = User(username=username, password=generate_password_hash(password))
+                db.session.add(u)
+                db.session.commit()
+            except IntegrityError:
                 error = f"User {username} already registered."
             else:
                 return redirect(url_for("auth.login"))
@@ -50,21 +49,18 @@ def login():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
-        db = get_db()
         error = None
 
-        user = db.execute(
-            "SELECT * from user where username = ?", (username,)
-        ).fetchone()
+        user = User.query.filter_by(username=username).first()
 
         if user is None:
             error = "Inocrrect username."
-        elif not check_password_hash(user["password"], password):
+        elif not check_password_hash(user.password, password):
             error = "Incorrect password"
 
         if error is None:
             session.clear()
-            session["user_id"] = user["id"]
+            session["user_id"] = user.id
             return redirect(url_for("index"))
 
         flash(error)
@@ -78,9 +74,7 @@ def load_loggedin_user():
     if user_id is None:
         g.user = None
     else:
-        g.user = (
-            get_db().execute("select * from user where id = ?", (user_id,)).fetchone()
-        )
+        g.user = User.query.get(user_id)
 
 
 @bp.route("/logout")
