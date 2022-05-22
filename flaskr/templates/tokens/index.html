@@ -2,6 +2,9 @@
 
 {% block header %}
   <h1>{% block title %}Your tokens{% endblock %}</h1>
+  {% if g.user %}
+    <a class="action" href="{{ url_for('tokens.create') }}">New</a>
+  {% endif %}
 {% endblock %}
 
 {% block content %}
@@ -12,6 +15,10 @@
       <h1> {{ token.name }}</h1>
       <div class="about"> Created at {{ token.created.strftime('%Y-%m-%d %H:%m') }} </div>
      </div>
+
+      <form action="{{ url_for('tokens.delete', id=token['id']) }}" method="post">
+        <input class="danger" type="submit" value="Delete" onclick="return confirm('Are you sure?');">
+      </form>
     </header>
     <p class="token">{{ token.value }}</p>
     {% if not loop.last %}

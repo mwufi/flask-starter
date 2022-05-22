@@ -1,10 +1,6 @@
 from flaskr.db import db
 from datetime import datetime
-import secrets
 
-
-def gen_secret():
-    return secrets.token_hex()
 
 
 class User(db.Model):
@@ -31,7 +27,7 @@ class Post(db.Model):
 
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    value = db.Column(db.String(80), nullable=False, default=gen_secret())
+    value = db.Column(db.String(80), nullable=False)
     name = db.Column(db.String(80), nullable=True, default='New Token')
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
