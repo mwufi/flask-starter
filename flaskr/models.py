@@ -32,6 +32,7 @@ class Post(db.Model):
 class Token(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     value = db.Column(db.String(80), nullable=False, default=gen_secret())
+    name = db.Column(db.String(80), nullable=True, default='New Token')
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
