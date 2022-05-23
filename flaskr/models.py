@@ -1,7 +1,6 @@
 from flaskr.db import db
 from datetime import datetime
-
-date_format = "%Y/%m/%d %I:%M:%S %p"
+from flaskr.utils import DATE_FORMAT
 
 
 class User(db.Model):
@@ -55,6 +54,6 @@ class Revision(db.Model):
         return {
             "path": self.path,
             "content hash": self.content_hash,
-            "last modified": self.last_modified.strftime(date_format),
+            "last modified": self.last_modified.strftime(DATE_FORMAT),
             "user id": self.user_id,
         }

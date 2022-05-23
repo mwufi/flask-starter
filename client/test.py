@@ -10,7 +10,7 @@ import json
 BUF_SIZE = 2**15
 notes_path = Path("/Users/aii/02_Notes/Opal/Actual/")
 SERVER_API = "http://localhost:5000/revisions"
-date_format = "%Y/%m/%d %I:%M:%S %p"
+date_format = "%c"
 
 
 def hash_content(file):

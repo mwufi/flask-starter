@@ -2,10 +2,10 @@ from flask import Blueprint, g, redirect, url_for, request, jsonify
 
 from flaskr.models import Revision
 from flaskr.db import get_db
+from flaskr.utils import DATE_FORMAT
 from datetime import datetime
 
 bp = Blueprint("revisions", __name__, url_prefix="/revisions")
-date_format = "%Y/%m/%d %I:%M:%S %p"
 
 
 @bp.route("/")
@@ -39,7 +39,7 @@ def create():
         return {"status": "error", "message": "Error: you must have all the fields"}
 
     # convert types (everything else is string)
-    last_modified = datetime.strptime(last_modified, date_format)
+    last_modified = datetime.strptime(last_modified, DATE_FORMAT)
 
     # does it exist already?
     # TODO: also, you might have to filter by user, once we make token_required
