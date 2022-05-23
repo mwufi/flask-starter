@@ -53,6 +53,6 @@ class Revision(db.Model):
         return {
             'path': self.path,
             'content hash': self.content_hash,
-            'last modified': self.last_modified.strftime("%m/%d %H:%m %p"),
+            'last modified': self.last_modified.strftime("%Y/%M/%d %H:%m %p"),
             'user id': self.user_id
         }

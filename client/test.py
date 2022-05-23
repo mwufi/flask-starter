@@ -38,7 +38,14 @@ _mock_server = {}
 async def get_server_details(file: FileData) -> Optional[FileData]:
     """Returns the last known locations"""
     key = file.path.relative_to(notes_path)
-    return _mock_server.get(key, None)
+    # return _mock_server.get(key, None)
+
+    payload = {"filename": key}
+
+    x = requests.get(SERVER_API + "/get", payload).json()
+    last_modified = datetime.strptime(x["last modified"], "%Y/%M/%d %H:%m %p")
+
+    return FileData(x["path"], last_modified, x["content hash"])
 
 
 async def sync_file(file: FileData) -> bool:
@@ -49,14 +56,15 @@ async def sync_file(file: FileData) -> bool:
 
     # for now, upload test contents!!
     o = {
-        'path': key,
-        'last_modified': file.last_modified.strftime("%m/%d %H:%M:%S %p"),
-        'hash': file.hash,
-        'contents': "TEST contents"
+        "path": key,
+        "last_modified": file.last_modified.strftime("%Y/%m/%d %H:%M:%S %p"),
+        "hash": file.hash,
+        "contents": "TEST contents",
     }
     json_o = json.loads(json.dumps(o, default=str))
-    x = requests.post(SERVER_API+"/create", json = json_o)
-    print(x.json())
+    x = requests.post(SERVER_API + "/create", json=json_o)
+    if x.status_code != 200:
+        print(x.json())
     print("synced - ", key)
     return True
 
@@ -78,6 +86,7 @@ async def maybe_sync_file(file: FileData) -> bool:
         print("hash differ")
         return await sync_file(file)
 
+    print('skip - ', file.path.name)
     return False
 
 

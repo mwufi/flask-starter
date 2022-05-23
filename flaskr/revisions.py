@@ -13,6 +13,13 @@ def index():
     return jsonify([r.serialize() for r in revisions])
 
 
+@bp.route("/get")
+def details():
+    args = request.args
+    r = Revision.query.filter_by(path=args['filename']).first()
+    return jsonify(r.serialize() if r else None) 
+
+
 @bp.route("/create", methods=["POST"])
 def create():
     # To get data fields, use get_json()
@@ -31,7 +38,7 @@ def create():
         return {"status": "error", "message": "Error: you must have all the fields"}
 
     # convert types (everything else is string)
-    last_modified = datetime.strptime(last_modified, "%m/%d %H:%M:%S %p")
+    last_modified = datetime.strptime(last_modified, "%Y/%m/%d %H:%M:%S %p")
 
     # does it exist already?
     # TODO: also, you might have to filter by user, once we make token_required
