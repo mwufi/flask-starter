@@ -43,8 +43,10 @@ async def get_server_details(file: FileData) -> Optional[FileData]:
     payload = {"filename": key}
 
     x = requests.get(SERVER_API + "/get", payload).json()
-    last_modified = datetime.strptime(x["last modified"], "%Y/%M/%d %H:%m %p")
+    if not x:
+        return None
 
+    last_modified = datetime.strptime(x["last modified"], "%Y/%M/%d %H:%m %p")
     return FileData(x["path"], last_modified, x["content hash"])
 
 
@@ -86,7 +88,6 @@ async def maybe_sync_file(file: FileData) -> bool:
         print("hash differ")
         return await sync_file(file)
 
-    print('skip - ', file.path.name)
     return False
 
 
