@@ -21,6 +21,12 @@ def details():
     return jsonify(r.serialize() if r else None)
 
 
+@bp.route("/<int:id>")
+def full_post(id):
+    r = Revision.query.get(id)
+    return jsonify(r.serialize(long=True) if r else None)
+
+
 @bp.route("/create", methods=["POST"])
 def create():
     # To get data fields, use get_json()

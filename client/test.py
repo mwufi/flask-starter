@@ -57,12 +57,17 @@ async def sync_file(file: FileData) -> bool:
     key = file.path.relative_to(notes_path)
     _mock_server[key] = file
 
+    # load the file contents?
+    with open(file.path) as f:
+        contents = f.read()
+        print(contents)
+
     # for now, upload test contents!!
     o = {
         "path": key,
         "last_modified": file.last_modified.strftime(date_format),
         "hash": file.hash,
-        "contents": "TEST contents",
+        "contents": contents,
     }
     json_o = json.loads(json.dumps(o, default=str))
     x = requests.post(SERVER_API + "/create", json=json_o)
@@ -72,18 +77,18 @@ async def sync_file(file: FileData) -> bool:
     return True
 
 
-async def maybe_sync_file(file: FileData) -> bool:
+async def maybe_sync_file(file: FileData, force=False) -> bool:
     """We pass in a filepath. It'll know what to do
 
     Returns: a boolean indicating whether we synced it or not
     """
     last_sync = await get_server_details(file)
-    if not last_sync:
+    if not last_sync or force:
         return await sync_file(file)
 
     thirty_seconds = timedelta(seconds=30)
     if last_sync.last_modified < file.last_modified - thirty_seconds:
-        print("older file!", last_sync.last_modified, file.last_modified)
+        print("older file!")
         return await sync_file(file)
 
     if last_sync.hash != file.hash:
@@ -114,6 +119,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-for t in notes_path.glob("**/*.png"):
-    print("Images:", t)

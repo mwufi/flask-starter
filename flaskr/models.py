@@ -50,10 +50,14 @@ class Revision(db.Model):
     def __repr__(self) -> str:
         return "%s - %s" % (self.path, self.created.strftime("%m/%d %H:%M:%s %p"))
 
-    def serialize(self):
-        return {
+    def serialize(self, long=False):
+        value = {
+            "id": self.id,
             "path": self.path,
             "content hash": self.content_hash,
             "last modified": self.last_modified.strftime(DATE_FORMAT),
             "user id": self.user_id,
         }
+        if long:
+            value["body"] = self.body
+        return value
