@@ -6,6 +6,7 @@ from dataclasses import dataclass
 import asyncio
 import requests
 import json
+import pytz
 
 BUF_SIZE = 2**15
 notes_path = Path("/Users/aii/02_Notes/Opal/Actual/")
@@ -30,25 +31,31 @@ class FileData:
     path: Path
     last_modified: datetime
     hash: str
+    contents: str = None
 
 
 # a map of filenames to details
 _mock_server = {}
 
 
-async def get_server_details(file: FileData) -> Optional[FileData]:
+async def get_server_details(file: FileData, with_contents=False) -> Optional[FileData]:
     """Returns the last known locations"""
     key = file.path.relative_to(notes_path)
     # return _mock_server.get(key, None)
 
-    payload = {"filename": key}
+    payload = {"filename": key, "contents": with_contents}
 
     x = requests.get(SERVER_API + "/details", payload).json()
     if not x:
         return None
 
-    last_modified = datetime.strptime(x["last modified"], date_format)
-    return FileData(x["path"], last_modified, x["content hash"])
+    path = x["path"]
+    last_modified = datetime.strptime(x["last modified"], date_format).replace(
+        tzinfo=pytz.UTC
+    )
+    content_hash = x["content hash"]
+    contents = x.get("body") if with_contents else None
+    return FileData(path, last_modified, content_hash, contents)
 
 
 async def sync_file(file: FileData) -> bool:
@@ -77,6 +84,21 @@ async def sync_file(file: FileData) -> bool:
     return True
 
 
+def overwrite_local(local: FileData, full_file: FileData) -> bool:
+    """Update local contents & hash
+    
+    Actually, one bad thing about this is that if you update it,
+    the metadata becomes newer. so then next time, it'll sync to the server!
+    """
+    # TODO: how do we know if it successfully wrote the file?
+    with open(local.path, "w") as f:
+        f.write(full_file.contents)
+
+    key = local.path.relative_to(notes_path)
+    print("downloaded - ", key)
+    return True
+
+
 async def maybe_sync_file(file: FileData, force=False) -> bool:
     """We pass in a filepath. It'll know what to do
 
@@ -86,10 +108,15 @@ async def maybe_sync_file(file: FileData, force=False) -> bool:
     if not last_sync or force:
         return await sync_file(file)
 
-    thirty_seconds = timedelta(seconds=30)
-    if last_sync.last_modified < file.last_modified - thirty_seconds:
+    one_second = timedelta(seconds=1)
+    if last_sync.last_modified < file.last_modified - one_second:
         print("older file!")
         return await sync_file(file)
+
+    if file.last_modified < last_sync.last_modified - one_second:
+        print("newer file!", file.last_modified, last_sync.last_modified)
+        full_file = await get_server_details(file, with_contents=True)
+        overwrite_local(file, full_file)
 
     if last_sync.hash != file.hash:
         print("hash differ")
@@ -101,7 +128,9 @@ async def maybe_sync_file(file: FileData, force=False) -> bool:
 async def main():
     for t in notes_path.glob("**/*.md"):
         stat = t.stat()
-        metadata_modified_at = datetime.fromtimestamp(stat.st_ctime)
+        metadata_modified_at = datetime.fromtimestamp(stat.st_ctime).astimezone(
+            pytz.UTC
+        )
         content_hash = hash_content(t)
 
         filedata = FileData(t, metadata_modified_at, content_hash)

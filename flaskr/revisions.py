@@ -28,7 +28,8 @@ def index():
 def details():
     args = request.args
     r = Revision.query.filter_by(path=args["filename"]).first()
-    return jsonify(r.serialize() if r else None)
+    long = args.get("contents", False)
+    return jsonify(r.serialize(long=long) if r else None)
 
 
 @bp.route("/api/<int:id>")
