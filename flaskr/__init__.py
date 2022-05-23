@@ -29,10 +29,11 @@ def create_app(test_config=None):
     db.init_app(app)
 
     # Routes!
-    from . import auth, blog, tokens
+    from . import auth, blog, tokens, revisions
     app.register_blueprint(auth.bp)
     app.register_blueprint(blog.bp)
     app.register_blueprint(tokens.bp)
+    app.register_blueprint(revisions.bp)
     # app.add_url_rule('/', endpoint='index')
 
     # now, routes and stuff!
