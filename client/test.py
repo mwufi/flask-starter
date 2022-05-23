@@ -9,7 +9,7 @@ import json
 
 BUF_SIZE = 2**15
 notes_path = Path("/Users/aii/02_Notes/Opal/Actual/")
-SERVER_API = "http://localhost:5000/revisions"
+SERVER_API = "http://localhost:5000/revisions/api"
 date_format = "%c"
 
 
@@ -43,7 +43,7 @@ async def get_server_details(file: FileData) -> Optional[FileData]:
 
     payload = {"filename": key}
 
-    x = requests.get(SERVER_API + "/get", payload).json()
+    x = requests.get(SERVER_API + "/details", payload).json()
     if not x:
         return None
 

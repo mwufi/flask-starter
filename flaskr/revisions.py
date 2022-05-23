@@ -1,5 +1,15 @@
-from flask import Blueprint, g, redirect, url_for, request, jsonify
+from flask import (
+    Blueprint,
+    flash,
+    abort,
+    redirect,
+    render_template,
+    url_for,
+    request,
+    jsonify,
+)
 
+from flaskr.auth import login_required
 from flaskr.models import Revision
 from flaskr.db import get_db
 from flaskr.utils import DATE_FORMAT
@@ -14,20 +24,72 @@ def index():
     return jsonify([r.serialize() for r in revisions])
 
 
-@bp.route("/get")
+@bp.route("/api/details")
 def details():
     args = request.args
     r = Revision.query.filter_by(path=args["filename"]).first()
     return jsonify(r.serialize() if r else None)
 
 
+@bp.route("/api/<int:id>")
 @bp.route("/<int:id>")
-def full_post(id):
-    r = Revision.query.get(id)
+def show(id):
+    r = get_revision(id)
     return jsonify(r.serialize(long=True) if r else None)
 
 
-@bp.route("/create", methods=["POST"])
+@bp.route("/<int:id>/update", methods=["GET", "POST"])
+def update(id):
+    r = get_revision(id)
+    if request.method == "POST":
+        path = request.form["path"]
+        body = request.form["body"]
+        error = None
+
+        if not path:
+            error = "Path is required!"
+
+        if error is not None:
+            flash(error)
+        else:
+            db = get_db()
+            if r is not None:
+                r.path = path
+                r.body = body
+                r.last_modified = datetime.utcnow()
+                r.content_hash = "<tbd>"
+                db.session.add(r)
+                db.session.commit()
+            else:
+                print("no such thing!!")
+            return redirect(url_for("revisions.show", id=id))
+    return render_template("revisions/update.html", post=r)
+
+
+def get_revision(id, check_author=True):
+    post = Revision.query.get(id)
+
+    if post is None:
+        abort(404, f"Revision id {id} doesn't exist.")
+
+    # if check_author and post.author_id != g.user.id:
+    #     abort(403)
+
+    return post
+
+
+@bp.route("/<int:id>/delete", methods=["POST"])
+@login_required
+def delete(id):
+    db = get_db()
+
+    p = get_revision(id)
+    db.session.delete(p)
+    db.session.commit()
+    return redirect(url_for("revisions.index"))
+
+
+@bp.route("/api/create", methods=["POST"])
 def create():
     # To get data fields, use get_json()
     data = request.get_json()
