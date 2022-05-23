@@ -56,7 +56,7 @@ async def sync_file(file: FileData) -> bool:
     }
     json_o = json.loads(json.dumps(o, default=str))
     x = requests.post(SERVER_API+"/create", json = json_o)
-    print(x.json)
+    print(x.json())
     print("synced - ", key)
     return True
 

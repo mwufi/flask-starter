@@ -34,18 +34,23 @@ def create():
     last_modified = datetime.strptime(last_modified, "%m/%d %H:%M:%S %p")
 
     # does it exist already?
-    # TODO: find the revisions with the same path!
     # TODO: also, you might have to filter by user, once we make token_required
-        
-    # create our new revision
-    r = Revision(
-        path=path,
-        body=contents,
-        last_modified=last_modified,
-        content_hash=hash,
-        user_id=1,
-    )
+    # TODO: right now, we directly modify the row... but it might to be good to have it update
     db = get_db()
-    db.session.add(r)
+
+    b = Revision.query.filter(Revision.path == path).first()
+    if not b:
+        r = Revision(
+            path=path,
+            body=contents,
+            last_modified=last_modified,
+            content_hash=hash,
+            user_id=1,
+        )
+        db.session.add(r)
+    else:
+        b.body = contents
+        b.last_modified = last_modified
+        b.content_hash = hash
     db.session.commit()
     return {"status": "success"}
