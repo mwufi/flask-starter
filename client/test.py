@@ -1,5 +1,5 @@
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib
 from typing import Optional
 from dataclasses import dataclass
@@ -10,6 +10,7 @@ import json
 BUF_SIZE = 2**15
 notes_path = Path("/Users/aii/02_Notes/Opal/Actual/")
 SERVER_API = "http://localhost:5000/revisions"
+date_format = "%Y/%m/%d %I:%M:%S %p"
 
 
 def hash_content(file):
@@ -46,7 +47,7 @@ async def get_server_details(file: FileData) -> Optional[FileData]:
     if not x:
         return None
 
-    last_modified = datetime.strptime(x["last modified"], "%Y/%M/%d %H:%m %p")
+    last_modified = datetime.strptime(x["last modified"], date_format)
     return FileData(x["path"], last_modified, x["content hash"])
 
 
@@ -59,7 +60,7 @@ async def sync_file(file: FileData) -> bool:
     # for now, upload test contents!!
     o = {
         "path": key,
-        "last_modified": file.last_modified.strftime("%Y/%m/%d %H:%M:%S %p"),
+        "last_modified": file.last_modified.strftime(date_format),
         "hash": file.hash,
         "contents": "TEST contents",
     }
@@ -80,8 +81,9 @@ async def maybe_sync_file(file: FileData) -> bool:
     if not last_sync:
         return await sync_file(file)
 
-    if last_sync.last_modified > datetime.utcnow():
-        print("older file!")
+    thirty_seconds = timedelta(seconds=30)
+    if last_sync.last_modified < file.last_modified - thirty_seconds:
+        print("older file!", last_sync.last_modified, file.last_modified)
         return await sync_file(file)
 
     if last_sync.hash != file.hash:

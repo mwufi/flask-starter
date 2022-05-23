@@ -5,6 +5,7 @@ from flaskr.db import get_db
 from datetime import datetime
 
 bp = Blueprint("revisions", __name__, url_prefix="/revisions")
+date_format = "%Y/%m/%d %I:%M:%S %p"
 
 
 @bp.route("/")
@@ -16,8 +17,8 @@ def index():
 @bp.route("/get")
 def details():
     args = request.args
-    r = Revision.query.filter_by(path=args['filename']).first()
-    return jsonify(r.serialize() if r else None) 
+    r = Revision.query.filter_by(path=args["filename"]).first()
+    return jsonify(r.serialize() if r else None)
 
 
 @bp.route("/create", methods=["POST"])
@@ -38,7 +39,7 @@ def create():
         return {"status": "error", "message": "Error: you must have all the fields"}
 
     # convert types (everything else is string)
-    last_modified = datetime.strptime(last_modified, "%Y/%m/%d %H:%M:%S %p")
+    last_modified = datetime.strptime(last_modified, date_format)
 
     # does it exist already?
     # TODO: also, you might have to filter by user, once we make token_required
