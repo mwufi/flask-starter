@@ -86,7 +86,7 @@ async def sync_file(file: FileData) -> bool:
 
 def overwrite_local(local: FileData, full_file: FileData) -> bool:
     """Update local contents & hash
-    
+
     Actually, one bad thing about this is that if you update it,
     the metadata becomes newer. so then next time, it'll sync to the server!
     """
@@ -110,11 +110,15 @@ async def maybe_sync_file(file: FileData, force=False) -> bool:
 
     one_second = timedelta(seconds=1)
     if last_sync.last_modified < file.last_modified - one_second:
-        print("older file!")
+        print("local update!")
         return await sync_file(file)
 
     if file.last_modified < last_sync.last_modified - one_second:
-        print("newer file!", file.last_modified, last_sync.last_modified)
+        print(
+            "remote update!",
+            file.last_modified.strftime(date_format),
+            last_sync.last_modified,
+        ).strftime(date_format)
         full_file = await get_server_details(file, with_contents=True)
         overwrite_local(file, full_file)
 
