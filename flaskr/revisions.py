@@ -10,24 +10,66 @@ from flask import (
 )
 
 from flaskr.auth import login_required
-from flaskr.models import Revision
+from flaskr.models import Revision, Checkpoint
 from flaskr.db import get_db
 from flaskr.utils import DATE_FORMAT
-from datetime import datetime
+from datetime import datetime, timedelta
 
 bp = Blueprint("revisions", __name__, url_prefix="/revisions")
 
 
 @bp.route("/")
 def index():
+    c = Checkpoint.latest_checkpoint()
     revisions = Revision.query.all()
-    return jsonify([r.serialize() for r in revisions])
+
+    ten_seconds = timedelta(seconds=10)
+    current_revisions = [
+        r
+        for r in revisions
+        if r.last_checked and r.last_checked > c.created - ten_seconds
+    ]
+    potentially_deleted = [
+        r
+        for r in revisions
+        if not r.last_checked or r.last_checked <= c.created - ten_seconds
+    ]
+
+    # return jsonify([r.serialize() for r in revisions])
+    return render_template(
+        "revisions/index.html",
+        current_revisions=current_revisions,
+        potentially_deleted=potentially_deleted,
+    )
+
+
+@bp.route("/api/checkpoint", methods=["POST"])
+def checkpoint():
+    # To get data fields, use get_json()
+    data = request.get_json()
+    print("sync filetree", data)
+
+    c = Checkpoint(user_id=1)
+    db = get_db()
+    db.session.add(c)
+    db.session.commit()
+
+    print("checkpoint", c.created)
+    return {"status": "success"}
 
 
 @bp.route("/api/details")
 def details():
     args = request.args
     r = Revision.query.filter_by(path=args["filename"]).first()
+
+    # If we call this endpoint, it's likely that it still exists
+    # on client!! so we refresh it
+    r.last_checked = datetime.utcnow()
+    db = get_db()
+    db.session.add(r)
+    db.session.commit()
+
     long = args.get("contents", False)
     return jsonify(r.serialize(long=long) if r else None)
 

@@ -11,7 +11,7 @@ import pytz
 BUF_SIZE = 2**15
 notes_path = Path("/Users/aii/02_Notes/Opal/Actual/")
 SERVER_API = "http://localhost:5000/revisions/api"
-date_format = "%c"
+DATE_FORMAT = "%c"
 
 
 def hash_content(file):
@@ -50,7 +50,7 @@ async def get_server_details(file: FileData, with_contents=False) -> Optional[Fi
         return None
 
     path = x["path"]
-    last_modified = datetime.strptime(x["last modified"], date_format).replace(
+    last_modified = datetime.strptime(x["last modified"], DATE_FORMAT).replace(
         tzinfo=pytz.UTC
     )
     content_hash = x["content hash"]
@@ -72,7 +72,7 @@ async def sync_file(file: FileData) -> bool:
     # for now, upload test contents!!
     o = {
         "path": key,
-        "last_modified": file.last_modified.strftime(date_format),
+        "last_modified": file.last_modified.strftime(DATE_FORMAT),
         "hash": file.hash,
         "contents": contents,
     }
@@ -116,9 +116,9 @@ async def maybe_sync_file(file: FileData, force=False) -> bool:
     if file.last_modified < last_sync.last_modified - one_second:
         print(
             "remote update!",
-            file.last_modified.strftime(date_format),
-            last_sync.last_modified,
-        ).strftime(date_format)
+            file.last_modified.strftime(DATE_FORMAT),
+            last_sync.last_modified.strftime(DATE_FORMAT),
+        )
         full_file = await get_server_details(file, with_contents=True)
         overwrite_local(file, full_file)
 
@@ -127,6 +127,29 @@ async def maybe_sync_file(file: FileData, force=False) -> bool:
         return await sync_file(file)
 
     return False
+
+
+def current_sync():
+    """Creates a "checkpoint", which is the timestamp of the current sync
+
+    If there are revisions on the server which are older than the checkpoint,
+    this must be bc 1) we failed to sync it (unlikely), or 2) they should be
+    deleted!
+
+    This makes it easier to recognize, on the server, which files have been
+    deleted locally!
+    """
+
+    # Step 1: local --> remote
+    o = {
+        "time": datetime.utcnow(),
+    }
+    json_o = json.loads(json.dumps(o, default=str))
+    x = requests.post(SERVER_API + "/checkpoint", json=json_o)
+    if x.status_code != 200:
+        print(x.json())
+    else:
+        print("[File tree] local --> remote!")
 
 
 async def main():
@@ -140,14 +163,9 @@ async def main():
         filedata = FileData(t, metadata_modified_at, content_hash)
 
         # sync file?
-        synced = await maybe_sync_file(filedata)
+        await maybe_sync_file(filedata)
 
-        _ = {
-            "name": t.relative_to(notes_path),
-            "last modified": metadata_modified_at,
-            "hash": content_hash,
-            "synced": synced,
-        }
+    current_sync()
 
 
 if __name__ == "__main__":

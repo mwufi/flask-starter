@@ -1,0 +1,74 @@
+{% extends 'base.html' %} {% block header %}
+<h1>{% block title %}Revisions{% endblock %}</h1>
+{% if g.user %}
+<a class="action" href="{{ url_for('revisions.create') }}">New</a>
+{% endif %} {% endblock %} {% block content %}
+
+{% if potentially_deleted %}
+
+<hr />
+<h1>Potentially deleted:</h1>
+<hr />
+
+{% endif %}
+{% for revision in potentially_deleted %}
+<article class="revision">
+  <header>
+    <div>
+      <h1>{{ revision['path'] }}</h1>
+      <details>
+        <summary>Metadata</summary>
+        <div class="about">
+          meta changed: {{ revision['last_modified'].strftime('%c') }}
+        </div>
+        <div class="about">
+          existing: {{ revision['last_checked'] and
+          revision['last_checked'].strftime('%c') }}
+        </div>
+        <a
+          class="action"
+          href="{{ url_for('revisions.update', id=revision['id']) }}"
+        >
+          Edit
+        </a>
+      </details>
+    </div>
+  </header>
+  <p class="body">{{ revision['body'][:100] }}</p>
+</article>
+{% if not loop.last %}
+<hr />
+{% endif %} {% endfor %}
+
+<hr />
+<h1>Current notes:</h1>
+<hr />
+
+{% for revision in current_revisions %}
+<article class="revision">
+  <header>
+    <div>
+      <h1>{{ revision['path'] }}</h1>
+      <details>
+        <summary>Metadata</summary>
+        <div class="about">
+          meta changed: {{ revision['last_modified'].strftime('%c') }}
+        </div>
+        <div class="about">
+          existing: {{ revision['last_checked'] and
+          revision['last_checked'].strftime('%c') }}
+        </div>
+        <a
+          class="action"
+          href="{{ url_for('revisions.update', id=revision['id']) }}"
+        >
+          Edit
+        </a>
+      </details>
+    </div>
+  </header>
+  <p class="body">{{ revision['body'][:100] }}</p>
+</article>
+{% if not loop.last %}
+<hr />
+{% endif %} {% endfor %} {% endblock %}
