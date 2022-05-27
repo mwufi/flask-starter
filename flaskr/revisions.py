@@ -45,9 +45,6 @@ def index():
 
 @bp.route("/api/checkpoint", methods=["POST"])
 def checkpoint():
-    # To get data fields, use get_json()
-    data = request.get_json()
-
     c = Checkpoint(user_id=1)
     db = get_db()
     db.session.add(c)
