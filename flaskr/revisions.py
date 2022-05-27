@@ -63,6 +63,9 @@ def details():
     args = request.args
     r = Revision.query.filter_by(path=args["filename"]).first()
 
+    if r is None:
+        return {"status": "error", "message": "Stuff does not exist!"}, 404
+
     # If we call this endpoint, it's likely that it still exists
     # on client!! so we refresh it
     r.last_checked = datetime.utcnow()

@@ -45,10 +45,11 @@ async def get_server_details(file: FileData, with_contents=False) -> Optional[Fi
 
     payload = {"filename": key, "contents": with_contents}
 
-    x = requests.get(SERVER_API + "/details", payload).json()
-    if not x:
+    x = requests.get(SERVER_API + "/details", payload)
+    if x.status_code  == 404:
         return None
-
+    
+    x = x.json()
     path = x["path"]
     last_modified = datetime.strptime(x["last modified"], DATE_FORMAT).replace(
         tzinfo=pytz.UTC
