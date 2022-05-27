@@ -47,7 +47,6 @@ def index():
 def checkpoint():
     # To get data fields, use get_json()
     data = request.get_json()
-    print("sync filetree", data)
 
     c = Checkpoint(user_id=1)
     db = get_db()
