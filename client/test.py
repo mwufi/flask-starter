@@ -68,7 +68,6 @@ async def sync_file(file: FileData) -> bool:
     # load the file contents?
     with open(file.path) as f:
         contents = f.read()
-        print(contents)
 
     # for now, upload test contents!!
     o = {
@@ -130,7 +129,7 @@ async def maybe_sync_file(file: FileData, force=False) -> bool:
     return False
 
 
-def current_sync():
+def create_checkpoint():
     """Creates a "checkpoint", which is the timestamp of the current sync
 
     If there are revisions on the server which are older than the checkpoint,
@@ -150,7 +149,7 @@ def current_sync():
     if x.status_code != 200:
         print(x.json())
     else:
-        print("[File tree] local --> remote!")
+        print("[Checkpoint created] ---> remote")
 
 
 async def main():
@@ -166,7 +165,7 @@ async def main():
         # sync file?
         await maybe_sync_file(filedata)
 
-    current_sync()
+    create_checkpoint()
 
 
 if __name__ == "__main__":
