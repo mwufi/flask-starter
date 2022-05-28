@@ -15,9 +15,8 @@
 <article class="revision">
   <header>
     <div>
-      <h1>{{ revision['path'] }}</h1>
       <details>
-        <summary>Metadata</summary>
+        <summary>{{ revision['path'] }}</summary>
         <div class="about">
           meta changed: {{ revision['last_modified'].strftime('%c') }}
         </div>
@@ -31,10 +30,11 @@
         >
           Edit
         </a>
+        <p class="body">{{ revision['body'][:100] }}</p>
+
       </details>
     </div>
   </header>
-  <p class="body">{{ revision['body'][:100] }}</p>
 </article>
 {% if not loop.last %}
 <hr />
@@ -48,9 +48,8 @@
 <article class="revision">
   <header>
     <div>
-      <h1>{{ revision['path'] }}</h1>
       <details>
-        <summary>Metadata</summary>
+        <summary>{{ revision['path'] }}</summary>
         <div class="about">
           meta changed: {{ revision['last_modified'].strftime('%c') }}
         </div>
@@ -64,10 +63,11 @@
         >
           Edit
         </a>
+        <p class="body">{{ revision['body'][:100] }}</p>
+
       </details>
     </div>
   </header>
-  <p class="body">{{ revision['body'][:100] }}</p>
 </article>
 {% if not loop.last %}
 <hr />
