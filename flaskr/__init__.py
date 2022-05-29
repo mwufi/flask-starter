@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, redirect, url_for
 
 DB_FILE = "/Users/aii/04_Hacks/blobbo/sync-server/test.db"
 
@@ -48,6 +48,11 @@ def create_app(test_config=None):
     @app.route('/hello')
     def hello():
         return 'Hello, World!'
+    
+    @app.route('/')
+    def index():
+        return redirect(url_for("revisions.index"))
+        
 
     return app
     
