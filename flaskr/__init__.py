@@ -34,6 +34,8 @@ def create_app(test_config=None):
     app.register_blueprint(blog.bp)
     app.register_blueprint(tokens.bp)
     app.register_blueprint(revisions.bp)
+    from .blueprints import users
+    app.register_blueprint(users.bp)
 
     # Api routes!
     from .lib import jwt
