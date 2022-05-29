@@ -1,0 +1,27 @@
+{% extends 'base.html' %} 
+
+{% block header %}
+
+<h1>{% block title %}Community{% endblock %}</h1>
+
+{% if g.user %}
+    <a class="action" href="">New</a>
+{% endif %}
+
+{% endblock %}
+
+
+{% block content %}
+  {% for user in users %}
+    <article class="post">
+      <header>
+        <div>
+          <h1>{{ user['username'] }}</h1>
+        </div>
+      </header>
+    </article>
+    {% if not loop.last %}
+      <hr>
+    {% endif %}
+  {% endfor %}
+{% endblock %}
