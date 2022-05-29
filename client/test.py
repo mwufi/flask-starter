@@ -5,13 +5,41 @@ from typing import Optional
 from dataclasses import dataclass
 import asyncio
 import requests
-import json
 import pytz
+import json
+
+
+def validate_json(body):
+    return json.loads(json.dumps(body, default=str))
+
+
+def post(api, body, auth=None, success_msg="200"):
+    """Handy wrapper for posting things"""
+    if auth:
+        headers = {"Authorization": "Bearer %s" % auth}
+    else:
+        headers = None
+
+    try:
+        api_path = Path(api).relative_to(SERVER_API)
+    except:
+        api_path = api
+    body = validate_json(body)
+    x = requests.post(api, json=body, headers=headers)
+    if x.status_code != 200:
+        print("POST", api_path, x.status_code)
+    else:
+        if success_msg:
+            print("POST", api_path, success_msg)
+    print("POST", api_path, x.json())
+    return x
+
 
 BUF_SIZE = 2**15
 notes_path = Path("/Users/aii/02_Notes/Opal/Actual/")
-SERVER_API = "http://localhost:5000/revisions/api"
+SERVER_API = "http://localhost:5000"
 DATE_FORMAT = "%c"
+TOKEN = None
 
 
 def hash_content(file):
@@ -45,10 +73,10 @@ async def get_server_details(file: FileData, with_contents=False) -> Optional[Fi
 
     payload = {"filename": key, "contents": with_contents}
 
-    x = requests.get(SERVER_API + "/details", payload)
-    if x.status_code  == 404:
+    x = requests.get(SERVER_API + "/revisions/api/fetch", payload)
+    if x.status_code == 404:
         return None
-    
+
     x = x.json()
     path = x["path"]
     last_modified = datetime.strptime(x["last modified"], DATE_FORMAT).replace(
@@ -57,6 +85,42 @@ async def get_server_details(file: FileData, with_contents=False) -> Optional[Fi
     content_hash = x["content hash"]
     contents = x.get("body") if with_contents else None
     return FileData(path, last_modified, content_hash, contents)
+
+
+def login(username, password):
+    global TOKEN
+    print("Logging in...")
+
+    try:
+        result = post(
+            SERVER_API + "/api/login",
+            {"username": username, "password": password},
+            success_msg="Login successful!",
+        )
+        TOKEN = result.json()["access_token"]
+    except:
+        print("Error setting token!")
+
+
+def create_checkpoint():
+    """Creates a "checkpoint", which is the timestamp of the current sync
+
+    If there are revisions on the server which are older than the checkpoint,
+    this must be bc 1) we failed to sync it (unlikely), or 2) they should be
+    deleted!
+
+    This makes it easier to recognize, on the server, which files have been
+    deleted locally!
+    """
+
+    # Step 1: local --> remote
+    post(
+        SERVER_API + "/revisions/api/checkpoint",
+        {
+            "time": datetime.utcnow(),
+        },
+        auth=TOKEN,
+    )
 
 
 async def sync_file(file: FileData) -> bool:
@@ -70,17 +134,17 @@ async def sync_file(file: FileData) -> bool:
         contents = f.read()
 
     # for now, upload test contents!!
-    o = {
-        "path": key,
-        "last_modified": file.last_modified.strftime(DATE_FORMAT),
-        "hash": file.hash,
-        "contents": contents,
-    }
-    json_o = json.loads(json.dumps(o, default=str))
-    x = requests.post(SERVER_API + "/create", json=json_o)
-    if x.status_code != 200:
-        print(x.json())
-    print("synced - ", key)
+    x = post(
+        SERVER_API + "/revisions/api/sync",
+        {
+            "path": key,
+            "last_modified": file.last_modified.strftime(DATE_FORMAT),
+            "hash": file.hash,
+            "contents": contents,
+        },
+        auth=TOKEN,
+        success_msg="-----> %s" % key,
+    )
     return True
 
 
@@ -110,12 +174,12 @@ async def maybe_sync_file(file: FileData, force=False) -> bool:
 
     one_second = timedelta(seconds=1)
     if last_sync.last_modified < file.last_modified - one_second:
-        print("local update!")
+        print("local file is newer! local ---> remote")
         return await sync_file(file)
 
     if file.last_modified < last_sync.last_modified - one_second:
         print(
-            "remote update!",
+            "remote is newer! remote ---> local",
             file.last_modified.strftime(DATE_FORMAT),
             last_sync.last_modified.strftime(DATE_FORMAT),
         )
@@ -123,36 +187,15 @@ async def maybe_sync_file(file: FileData, force=False) -> bool:
         overwrite_local(file, full_file)
 
     if last_sync.hash != file.hash:
-        print("hash differ")
+        print("hash differ. local ---> remote")
         return await sync_file(file)
 
     return False
 
 
-def create_checkpoint():
-    """Creates a "checkpoint", which is the timestamp of the current sync
-
-    If there are revisions on the server which are older than the checkpoint,
-    this must be bc 1) we failed to sync it (unlikely), or 2) they should be
-    deleted!
-
-    This makes it easier to recognize, on the server, which files have been
-    deleted locally!
-    """
-
-    # Step 1: local --> remote
-    o = {
-        "time": datetime.utcnow(),
-    }
-    json_o = json.loads(json.dumps(o, default=str))
-    x = requests.post(SERVER_API + "/checkpoint", json=json_o)
-    if x.status_code != 200:
-        print(x.json())
-    else:
-        print("[Checkpoint created] ---> remote")
-
-
 async def main():
+    login("df", "helloworld")
+
     for t in notes_path.glob("**/*.md"):
         stat = t.stat()
         metadata_modified_at = datetime.fromtimestamp(stat.st_ctime).astimezone(

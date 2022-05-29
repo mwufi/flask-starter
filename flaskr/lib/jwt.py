@@ -1,3 +1,4 @@
+from flask import jsonify
 from flaskr.models import User
 from flask_jwt_extended import (
     create_access_token,
@@ -23,6 +24,12 @@ def user_identity_lookup(user):
 def user_lookup_callback(_jwt_header, jwt_data):
     identity = jwt_data["sub"]
     return User.query.filter_by(id=identity).one_or_none()
+
+
+# Register a callback function when token is unauthorized
+@jwt.unauthorized_loader
+def invalid_token_callback(expired_token):
+    return jsonify(error="Gotta /login and get a new token, dude"), 500
 
 
 def init_app(app):

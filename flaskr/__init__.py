@@ -38,8 +38,9 @@ def create_app(test_config=None):
     # Api routes!
     from .lib import jwt
     jwt.init_app(app)
-    from .api import auth as auth_api
+    from .api import auth as auth_api, revisions as revision_api
     app.register_blueprint(auth_api.bp)
+    app.register_blueprint(revision_api.bp)
 
     # app.add_url_rule('/', endpoint='index')
 
