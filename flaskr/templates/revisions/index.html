@@ -2,16 +2,13 @@
 <h1>{% block title %}Revisions{% endblock %}</h1>
 {% if g.user %}
 <a class="action" href="{{ url_for('revisions.create') }}">New</a>
-{% endif %} {% endblock %} {% block content %}
-
-{% if potentially_deleted %}
+{% endif %} {% endblock %} {% block content %} {% if potentially_deleted %}
 
 <hr />
 <h1>Potentially deleted:</h1>
 <hr />
 
-{% endif %}
-{% for revision in potentially_deleted %}
+{% endif %} {% for revision in potentially_deleted %}
 <article class="revision">
   <header>
     <div>
@@ -30,8 +27,13 @@
         >
           Edit
         </a>
+        <a
+          class="action"
+          href="{{ url_for('revisions.show', id=revision['id']) }}"
+        >
+          View
+        </a>
         <p class="body">{{ revision['body'][:100] }}</p>
-
       </details>
     </div>
   </header>
@@ -63,8 +65,13 @@
         >
           Edit
         </a>
+        <a
+          class="action"
+          href="{{ url_for('revisions.show', id=revision['id']) }}"
+        >
+          View
+        </a>
         <p class="body">{{ revision['body'][:100] }}</p>
-
       </details>
     </div>
   </header>

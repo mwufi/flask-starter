@@ -1,0 +1,33 @@
+{% extends 'base.html' %} {% block header %}
+<h1>{% block title %}{{ revision['path'] }}{% endblock %}</h1>
+{% if g.user %}
+<a class="action" href="{{ url_for('revisions.update', id=revision['id']) }}">Edit</a>
+{% endif %} {% endblock %} 
+
+
+{% block content %}
+
+<article class="revision">
+  <header>
+    <div>
+      <details>
+        <summary>Metadata</summary>
+        <div class="about">
+          meta changed: {{ revision['last_modified'].strftime('%c') }}
+        </div>
+        <div class="about">
+          existing: {{ revision['last_checked'] and
+          revision['last_checked'].strftime('%c') }}
+        </div>
+      </details>
+    </div>
+  </header>
+  {% if metadata.get('image', None) %}
+  <div class="header">
+    <img src="{{ metadata['image'] }}" width="100%"/>
+  </div>
+  {% endif %}
+  <p class="body">{{ html_contents|safe }}</p>
+</article>
+
+{% endblock %}

@@ -9,6 +9,9 @@ from flask import (
     jsonify,
 )
 
+import markdown
+import frontmatter
+
 from flaskr.auth import login_required
 from flaskr.models import Revision, Checkpoint
 from flaskr.db import get_db
@@ -73,9 +76,21 @@ def details():
     return jsonify(r.serialize(long=long) if r else None)
 
 
-@bp.route("/api/<int:id>")
 @bp.route("/<int:id>")
 def show(id):
+    r = get_revision(id)
+    data = frontmatter.loads(r.body)
+    html_contents = markdown.markdown(data.content)
+    return render_template(
+        "revisions/show.html",
+        revision=r,
+        html_contents=html_contents,
+        metadata=data.metadata,
+    )
+
+
+@bp.route("/api/<int:id>")
+def show_json(id):
     r = get_revision(id)
     return jsonify(r.serialize(long=True) if r else None)
 
