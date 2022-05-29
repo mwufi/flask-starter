@@ -6,6 +6,7 @@ from flaskr.utils import DATE_FORMAT
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
+    full_name = db.Column(db.String(80), nullable=False, server_default='Your Name')
     password = db.Column(db.String(80), nullable=False)
 
     def __repr__(self) -> str:
