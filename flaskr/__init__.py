@@ -34,6 +34,13 @@ def create_app(test_config=None):
     app.register_blueprint(blog.bp)
     app.register_blueprint(tokens.bp)
     app.register_blueprint(revisions.bp)
+
+    # Api routes!
+    from .lib import jwt
+    jwt.init_app(app)
+    from .api import auth as auth_api
+    app.register_blueprint(auth_api.bp)
+
     # app.add_url_rule('/', endpoint='index')
 
     # now, routes and stuff!
