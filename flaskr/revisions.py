@@ -7,6 +7,7 @@ from flask import (
     url_for,
     request,
     jsonify,
+    g,
 )
 
 import markdown
@@ -21,10 +22,23 @@ from datetime import datetime, timedelta
 bp = Blueprint("revisions", __name__, url_prefix="/revisions")
 
 
+def get_revision(id, check_author=True):
+    revision = Revision.query.get(id)
+
+    if revision is None:
+        abort(404, f"Revision id {id} doesn't exist.")
+
+    if check_author and revision.user_id != g.user.id:
+        abort(403)
+
+    return revision
+
+
 @bp.route("/")
+@login_required
 def index():
-    c = Checkpoint.latest_checkpoint()
-    revisions = Revision.query.all()
+    c = Checkpoint.latest_checkpoint(g.user.id)
+    revisions = Revision.query.filter_by(user_id=g.user.id)
 
     ten_seconds = timedelta(seconds=10)
     current_revisions = [
@@ -47,6 +61,7 @@ def index():
 
 
 @bp.route("/<int:id>")
+@login_required
 def show(id):
     r = get_revision(id)
     data = frontmatter.loads(r.body)
@@ -60,6 +75,7 @@ def show(id):
 
 
 @bp.route("/<int:id>/update", methods=["GET", "POST"])
+@login_required
 def update(id):
     r = get_revision(id)
     if request.method == "POST":
@@ -85,18 +101,6 @@ def update(id):
                 print("no such thing!!")
             return redirect(url_for("revisions.show", id=id))
     return render_template("revisions/update.html", post=r)
-
-
-def get_revision(id, check_author=True):
-    post = Revision.query.get(id)
-
-    if post is None:
-        abort(404, f"Revision id {id} doesn't exist.")
-
-    # if check_author and post.author_id != g.user.id:
-    #     abort(403)
-
-    return post
 
 
 @bp.route("/<int:id>/delete", methods=["POST"])

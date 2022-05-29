@@ -42,17 +42,12 @@ def create_app(test_config=None):
     app.register_blueprint(auth_api.bp)
     app.register_blueprint(revision_api.bp)
 
-    # app.add_url_rule('/', endpoint='index')
+    app.add_url_rule('/', endpoint='revisions.index')
 
     # now, routes and stuff!
     @app.route('/hello')
     def hello():
         return 'Hello, World!'
-    
-    @app.route('/')
-    def index():
-        return render_template('index.html')
-        
 
     return app
     

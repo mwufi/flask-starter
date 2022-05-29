@@ -54,8 +54,8 @@ class Checkpoint(db.Model):
         return "Checkpoint %s" % (self.created.strftime("%c"))
 
     @staticmethod
-    def latest_checkpoint():
-        return Checkpoint.query.order_by(Checkpoint.created.desc()).first()
+    def latest_checkpoint(user_id):
+        return Checkpoint.query.filter_by(user_id=user_id).order_by(Checkpoint.created.desc()).first()
 
 
 class Revision(db.Model):
