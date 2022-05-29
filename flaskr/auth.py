@@ -1,3 +1,4 @@
+from datetime import datetime
 import functools
 from flask import (
     Blueprint,
@@ -62,6 +63,7 @@ def login():
             error = "Incorrect password"
 
         if error is None:
+            user.set_last_login()
             session.clear()
             session["user_id"] = user.id
             return redirect(url_for("index"))

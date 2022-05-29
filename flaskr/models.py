@@ -1,13 +1,24 @@
+import enum
 from flaskr.db import db
 from datetime import datetime
 from flaskr.utils import DATE_FORMAT
+from sqlalchemy.orm import relationship
 
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    full_name = db.Column(db.String(80), nullable=False, server_default='Your Name')
+    full_name = db.Column(db.String(80), nullable=False, server_default="Your Name")
     password = db.Column(db.String(80), nullable=False)
+
+    last_login = db.Column(db.DateTime, nullable=True)
+    notes = relationship("Revision", back_populates="author")
+
+    def set_last_login(self):
+        """Set last login date"""
+        self.last_login = datetime.utcnow()
+        db.session.add(self)
+        db.session.commit()
 
     def __repr__(self) -> str:
         return "User %s" % self.username
@@ -55,7 +66,11 @@ class Checkpoint(db.Model):
 
     @staticmethod
     def latest_checkpoint(user_id):
-        return Checkpoint.query.filter_by(user_id=user_id).order_by(Checkpoint.created.desc()).first()
+        return (
+            Checkpoint.query.filter_by(user_id=user_id)
+            .order_by(Checkpoint.created.desc())
+            .first()
+        )
 
 
 class Revision(db.Model):
@@ -68,6 +83,8 @@ class Revision(db.Model):
     last_checked = db.Column(db.DateTime, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     created = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    author = relationship("User", back_populates="notes")
 
     def __repr__(self) -> str:
         return "%s - %s" % (self.path, self.created.strftime("%m/%d %H:%M:%s %p"))
