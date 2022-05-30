@@ -44,12 +44,12 @@ def index():
     current_revisions = [
         r
         for r in revisions
-        if r.last_checked and r.last_checked > c.created - ten_seconds
+        if not r.last_checked or r.last_checked > c.created - ten_seconds
     ]
     potentially_deleted = [
         r
         for r in revisions
-        if not r.last_checked or r.last_checked <= c.created - ten_seconds
+        if r.last_checked and r.last_checked <= c.created - ten_seconds
     ]
 
     # return jsonify([r.serialize() for r in revisions])
