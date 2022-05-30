@@ -68,6 +68,14 @@ def create():
     return {"status": "success"}
 
 
+@bp.route("/search")
+def search():
+    args = request.args
+    results = Revision.query.filter(Revision.path.ilike("%{query}%".format(query=args["q"]))).all()
+    long = args.get("contents", False)
+    return jsonify([r.serialize(long=long) for r in results])
+
+
 @bp.route("/fetch")
 def details():
     args = request.args
@@ -99,7 +107,7 @@ def get_revision(id, check_author=True):
     return post
 
 
-@bp.route("/api/<int:id>")
+@bp.route("/<int:id>")
 def show_json(id):
     r = get_revision(id)
     return jsonify(r.serialize(long=True) if r else None)
